@@ -133,6 +133,7 @@ class OrderController extends Controller
             'worker'     => $o->worker ? [
                 'id'        => $o->worker->id,
                 'nama'      => $o->worker->user?->nama,
+                'specialty' => $o->worker->specialty,
                 'image_url' => $o->worker->image_url,
             ] : null,
             'tanggal'    => $o->tanggal,

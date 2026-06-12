@@ -57,8 +57,9 @@ class ReviewController extends Controller
 
         return response()->json([
             'data' => $reviews->map(fn($r) => [
-                'id'     => $r->id,
-                'worker' => [
+                'id'       => $r->id,
+                'order_id' => $r->order_id,
+                'worker'   => [
                     'id'        => $r->worker?->id,
                     'nama'      => $r->worker?->user?->nama,
                     'specialty' => $r->worker?->specialty,
