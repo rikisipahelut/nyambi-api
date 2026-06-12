@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nyambi — Perancangan Database & API</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 13px;
+    color: #1a2e1a;
+    background: #fff;
+    line-height: 1.6;
+  }
+
+  /* ── COVER ── */
+  .cover {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1a2e1a 0%, #2d5a27 60%, #4a8f3f 100%);
+    color: #fff;
+    text-align: center;
+    padding: 60px 40px;
+    page-break-after: always;
+  }
+  .cover-logo {
+    font-size: 52px;
+    font-weight: 900;
+    letter-spacing: -2px;
+    color: #a8d5a2;
+    margin-bottom: 8px;
+  }
+  .cover-tagline {
+    font-size: 15px;
+    color: #c8e6c4;
+    margin-bottom: 60px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .cover-title {
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 16px;
+  }
+  .cover-subtitle {
+    font-size: 16px;
+    color: #c8e6c4;
+    margin-bottom: 60px;
+  }
+  .cover-meta {
+    font-size: 13px;
+    color: #a8d5a2;
+    border-top: 1px solid rgba(255,255,255,0.2);
+    padding-top: 24px;
+    width: 100%;
+    max-width: 500px;
+  }
+  .cover-meta p { margin: 4px 0; }
+
+  /* ── LAYOUT ── */
+  .page {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 48px 56px;
+  }
+
+  /* ── TOC ── */
+  .toc-page { page-break-after: always; }
+  .toc h2 { font-size: 22px; color: #2d5a27; margin-bottom: 24px; border-bottom: 2px solid #2d5a27; padding-bottom: 8px; }
+  .toc ol { padding-left: 20px; }
+  .toc li { margin: 10px 0; font-size: 14px; }
+  .toc li a { color: #2d5a27; text-decoration: none; font-weight: 500; }
+  .toc li a:hover { text-decoration: underline; }
+  .toc .sub { font-size: 13px; color: #555; margin-left: 20px; }
+
+  /* ── SECTION HEADERS ── */
+  .section-header {
+    background: linear-gradient(90deg, #2d5a27, #4a8f3f);
+    color: #fff;
+    padding: 14px 24px;
+    border-radius: 8px;
+    margin: 40px 0 24px;
+    page-break-before: always;
+  }
+  .section-header h2 { font-size: 20px; font-weight: 700; }
+  .section-header p { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+
+  .section-header.no-break { page-break-before: auto; }
+
+  h3 {
+    font-size: 16px;
+    color: #2d5a27;
+    margin: 28px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #d4edcc;
+  }
+  h4 { font-size: 14px; color: #1a2e1a; margin: 20px 0 8px; font-weight: 600; }
+
+  p { margin: 8px 0; color: #333; }
+
+  /* ── TABLES ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 24px;
+    font-size: 12.5px;
+  }
+  thead tr { background: #2d5a27; color: #fff; }
+  thead th { padding: 10px 12px; text-align: left; font-weight: 600; }
+  tbody tr:nth-child(even) { background: #f4faf3; }
+  tbody tr:hover { background: #e8f5e4; }
+  tbody td { padding: 9px 12px; border-bottom: 1px solid #e0ede0; vertical-align: top; }
+  td code, th code { font-size: 11.5px; }
+
+  /* ── CODE BLOCKS ── */
+  pre {
+    background: #1e2a1e;
+    color: #c8e6c4;
+    padding: 20px 24px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 11.5px;
+    line-height: 1.7;
+    margin: 12px 0 24px;
+    border-left: 4px solid #4a8f3f;
+  }
+  code {
+    font-family: 'Consolas', 'Courier New', monospace;
+  }
+  .inline-code {
+    background: #e8f5e4;
+    color: #2d5a27;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 12px;
+  }
+
+  /* ── BADGES ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge-get    { background: #dbeafe; color: #1d4ed8; }
+  .badge-post   { background: #dcfce7; color: #15803d; }
+  .badge-put    { background: #fef9c3; color: #a16207; }
+  .badge-delete { background: #fee2e2; color: #dc2626; }
+  .badge-auth   { background: #f3e8ff; color: #7c3aed; }
+  .badge-open   { background: #f1f5f9; color: #64748b; }
+
+  /* ── ERD BOX ── */
+  .erd-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 16px 0 24px;
+  }
+  .erd-box {
+    border: 2px solid #2d5a27;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .erd-box-header {
+    background: #2d5a27;
+    color: #fff;
+    padding: 8px 12px;
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .erd-box-body {
+    padding: 8px 12px;
+    font-size: 11.5px;
+    line-height: 1.8;
+  }
+  .erd-pk { color: #d97706; font-weight: 700; }
+  .erd-fk { color: #2d5a27; font-style: italic; }
+
+  /* ── RELATION DIAGRAM ── */
+  .rel-diagram {
+    background: #f4faf3;
+    border: 1px solid #c6e0c0;
+    border-radius: 8px;
+    padding: 20px 24px;
+    font-family: 'Consolas', monospace;
+    font-size: 12.5px;
+    line-height: 2;
+    margin: 12px 0 24px;
+    color: #1a2e1a;
+  }
+
+  /* ── INFO BOX ── */
+  .info-box {
+    background: #f0fdf4;
+    border-left: 4px solid #22c55e;
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  .info-box strong { color: #15803d; }
+
+  .warn-box {
+    background: #fffbeb;
+    border-left: 4px solid #f59e0b;
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+
+  /* ── PRINT ── */
+  @media print {
+    body { font-size: 12px; }
+    .cover { min-height: 100vh; }
+    .section-header { page-break-before: always; }
+    pre { white-space: pre-wrap; word-break: break-all; }
+    a { color: inherit; text-decoration: none; }
+    .no-print { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     COVER PAGE
+══════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-logo">Nyambi</div>
+  <div class="cover-tagline">Marketplace Pekerja Terampil Indonesia</div>
+  <div class="cover-title">Perancangan Database<br>& Dokumentasi API</div>
+  <div class="cover-subtitle">Versi 1.0 — Dokumen Teknis</div>
+  <div class="cover-meta">
+    <p><strong>Proyek:</strong> Nyambi — Platform Jasa Pekerja Harian</p>
+    <p><strong>Teknologi:</strong> PostgreSQL · REST API · Next.js 16</p>
+    <p><strong>Tanggal:</strong> Juni 2026</p>
+    <p><strong>Status:</strong> Draft Perancangan</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     DAFTAR ISI
+══════════════════════════════════════════ -->
+<div class="page toc-page">
+  <div class="toc">
+    <h2>Daftar Isi</h2>
+    <ol>
+      <li><a href="#overview">Gambaran Umum Sistem</a></li>
+      <li>
+        <a href="#database">Perancangan Database</a>
+        <div class="sub">2.1 Diagram Relasi (ERD)</div>
+        <div class="sub">2.2 Detail Setiap Tabel</div>
+        <div class="sub">2.3 DDL Lengkap (SQL)</div>
+        <div class="sub">2.4 Index & Constraint</div>
+      </li>
+      <li>
+        <a href="#api">Dokumentasi API Endpoint</a>
+        <div class="sub">3.1 Autentikasi — /auth</div>
+        <div class="sub">3.2 Pengguna — /users</div>
+        <div class="sub">3.3 Kategori — /categories</div>
+        <div class="sub">3.4 Pekerja — /workers</div>
+        <div class="sub">3.5 Pesanan — /orders</div>
+        <div class="sub">3.6 Ulasan — /reviews</div>
+        <div class="sub">3.7 Favorit — /favorites</div>
+        <div class="sub">3.8 Notifikasi — /notifications</div>
+        <div class="sub">3.9 Pencarian — /search</div>
+      </li>
+      <li><a href="#convention">Konvensi & Standar API</a></li>
+      <li><a href="#notes">Catatan Implementasi</a></li>
+    </ol>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     1. GAMBARAN UMUM
+══════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header no-break" id="overview">
+    <h2>1. Gambaran Umum Sistem</h2>
+    <p>Arsitektur dan scope platform Nyambi</p>
+  </div>
+
+  <p>
+    <strong>Nyambi</strong> adalah platform marketplace yang menghubungkan pengguna dengan pekerja terampil harian
+    di Indonesia — tukang kebun, listrik, cleaning service, bangunan, dan 45+ kategori lainnya.
+  </p>
+
+  <h3>Entitas Utama</h3>
+  <table>
+    <thead>
+      <tr><th>Entitas</th><th>Keterangan</th><th>Relasi Utama</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>User</strong></td><td>Pengguna platform — bisa sebagai pembeli atau pekerja</td><td>Orders, Reviews, Favorites, Notifications</td></tr>
+      <tr><td><strong>Worker Profile</strong></td><td>Profil pekerja — extend dari User</td><td>Users, Categories, Orders, Reviews</td></tr>
+      <tr><td><strong>Category</strong></td><td>49 kategori jasa yang tersedia</td><td>Workers (many-to-many)</td></tr>
+      <tr><td><strong>Order</strong></td><td>Pesanan/booking layanan</td><td>User, Worker, Review</td></tr>
+      <tr><td><strong>Review</strong></td><td>Ulasan setelah pesanan selesai</td><td>Order (1-to-1), User, Worker</td></tr>
+      <tr><td><strong>Favorite</strong></td><td>Pekerja yang disimpan user</td><td>User, Worker</td></tr>
+      <tr><td><strong>Notification</strong></td><td>Pemberitahuan sistem per user</td><td>User</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Alur Utama Sistem</h3>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Alur</th><th>Tabel yang Terlibat</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>User registrasi & login</td><td>users</td></tr>
+      <tr><td>2</td><td>Browse kategori & cari pekerja</td><td>categories, worker_profiles, worker_categories</td></tr>
+      <tr><td>3</td><td>Lihat profil pekerja</td><td>worker_profiles, worker_services, worker_tags, reviews</td></tr>
+      <tr><td>4</td><td>Buat pesanan (booking)</td><td>orders</td></tr>
+      <tr><td>5</td><td>Pekerja konfirmasi / selesaikan pesanan</td><td>orders</td></tr>
+      <tr><td>6</td><td>User menulis ulasan</td><td>reviews (update rating di worker_profiles)</td></tr>
+      <tr><td>7</td><td>User simpan pekerja favorit</td><td>favorites</td></tr>
+      <tr><td>8</td><td>User mendaftar sebagai pekerja</td><td>worker_profiles, worker_categories, worker_services, worker_tags</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ══════════════════════════════════════════
+     2. DATABASE
+══════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header" id="database">
+    <h2>2. Perancangan Database</h2>
+    <p>PostgreSQL — 10 tabel utama</p>
+  </div>
+
+  <h3>2.1 Diagram Relasi (ERD)</h3>
+  <div class="rel-diagram">
+users ──────────────────────────────────────────────┐
+  │  1                                               │
+  ├──── worker_profiles (1:1) ────┬─── worker_categories ──── categories
+  │         │                    ├─── worker_tags
+  │         │                    └─── worker_services
+  │  1      │ N
+  ├──── orders ──────────────────── (user N:1, worker N:1)
+  │       │ 1
+  │       └──── reviews (1:1 per order)
+  │  N
+  ├──── favorites ───── worker_profiles
+  │  N
+  └──── notifications
+  </div>
+
+  <h3>Ringkasan Tabel</h3>
+  <div class="erd-grid">
+
+    <div class="erd-box">
+      <div class="erd-box-header">users</div>
+      <div class="erd-box-body">
+        <span class="erd-pk">PK id (UUID)</span><br>
+        nama VARCHAR(100)<br>
+        email VARCHAR(150)<br>
+        telepon VARCHAR(20)<br>
+        password VARCHAR(255)<br>
+        is_worker BOOLEAN<br>
+        created_at TIMESTAMP<br>
+        updated_at TIMESTAMP
+      </div>
+    </div>
+
+    <div class="erd-box">
+      <div class="erd-box-header">worker_profiles</div>
+      <div class="erd-box-body">
+        <span class="erd-pk">PK id (UUID)</span><br>
+        <span class="erd-fk">FK user_id → users</span><br>
+        specialty VARCHAR(100)<br>
+        bio TEXT<br>
+        location VARCHAR(100)<br>
+        status VARCHAR(20)<br>
+        experience_years SMALLINT<br>
+        response_time VARCHAR(50)<br>
+        completed_jobs INT<br>
+        rating NUMERIC(3,2)<br>
+        image_url TEXT
+      </div>
+    </div>
+
+    <div class="erd-box">
+      <div class="erd-box-header">categories</div>
+      <div class="erd-box-body">
+        <span class="erd-pk">PK id (VARCHAR)</span><br>
+        icon VARCHAR(50)<br>
+        title VARCHAR(100)<br>
+        created_at TIMESTAMP
+      </div>
+    </div>
+
+    <div class="erd-box">
+      <div class="erd-box-header">worker_categories</div>
+      <div class="erd-box-body">
+        <span class="erd-fk">FK worker_id → worker_profiles</span><br>
+        <span class="erd-fk">FK category_id → categories</span><br>
+        <em>PK: (worker_id, category_id)</em>
+      </div>
+    </div>
+
+    <div class="erd-box">
+      <div class="erd-box-header">worker_tags</div>
+      <div class="erd-box-body">
+        <span class="erd-pk">PK id (SERIAL)</span><br>
+        <span class="erd-fk">FK worker_id → worker_profiles</span><br>
+        tag VARCHAR(50)
+      </div>
+    </div>
+
+    <div class="erd-box">
+      <div class="erd-box-header">worker_services</div>
+      <div class="erd-box-body">
+        <span class="erd-pk">PK id (SERIAL)</span><br>
+        <span class="erd-fk">FK worker_id → worker_profiles</span><br>
+        name VARCHAR(100)<br>
+        price INT (Rupiah)<br>
+        unit VARCHAR(30)
+      </div>
+    </div>
+
+    <div class="erd-box">
+      <div class="erd-box-header">orders</div>
+      <div class="erd-box-body">
+        <span class="erd-pk">PK id (UUID)</span><br>
+        <span class="erd-fk">FK user_id → users</span><br>
+        <span class="erd-fk">FK worker_id → worker_profiles</span><br>
+        tanggal DATE<br>
+        waktu TIME<br>
+        deskripsi TEXT<br>
+        alamat TEXT<br>
+        telepon VARCHAR(20)<br>
+        status VARCHAR(20)<br>
+        created_at TIMESTAMP
+      </div>
+    </div>
+
+    <div class="erd-box">
+      <div class="erd-box-header">reviews</div>
+      <div class="erd-box-body">
+        <span class="erd-pk">PK id (UUID)</span><br>
+        <span class="erd-fk">FK order_id → orders (UNIQUE)</span><br>
+        <span class="erd-fk">FK user_id → users</span><br>
+        <span class="erd-fk">FK worker_id → worker_profiles</span><br>
+        rating SMALLINT (1–5)<br>
+        comment TEXT<br>
+        created_at TIMESTAMP
+      </div>
+    </div>
+
+    <div class="erd-box">
+      <div class="erd-box-header">favorites</div>
+      <div class="erd-box-body">
+        <span class="erd-fk">FK user_id → users</span><br>
+        <span class="erd-fk">FK worker_id → worker_profiles</span><br>
+        created_at TIMESTAMP<br>
+        <em>PK: (user_id, worker_id)</em>
+      </div>
+    </div>
+
+    <div class="erd-box">
+      <div class="erd-box-header">notifications</div>
+      <div class="erd-box-body">
+        <span class="erd-pk">PK id (UUID)</span><br>
+        <span class="erd-fk">FK user_id → users</span><br>
+        icon VARCHAR(50)<br>
+        title VARCHAR(150)<br>
+        body TEXT<br>
+        href VARCHAR(255)<br>
+        is_read BOOLEAN<br>
+        created_at TIMESTAMP
+      </div>
+    </div>
+
+  </div>
+
+  <h3>2.3 DDL Lengkap (SQL)</h3>
+
+<pre><code>-- ============================================================
+-- NYAMBI DATABASE SCHEMA v1.0
+-- PostgreSQL 15+
+-- ============================================================
+
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- ── 1. USERS ──────────────────────────────────────────────
+CREATE TABLE users (
+  id           UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+  nama         VARCHAR(100) NOT NULL,
+  email        VARCHAR(150) UNIQUE NOT NULL,
+  telepon      VARCHAR(20),
+  password     VARCHAR(255) NOT NULL,      -- bcrypt hash
+  is_worker    BOOLEAN      DEFAULT FALSE,
+  created_at   TIMESTAMP    DEFAULT NOW(),
+  updated_at   TIMESTAMP    DEFAULT NOW()
+);
+
+-- ── 2. CATEGORIES ─────────────────────────────────────────
+CREATE TABLE categories (
+  id         VARCHAR(50)  PRIMARY KEY,     -- e.g. 'kebun', 'listrik'
+  icon       VARCHAR(50)  NOT NULL,        -- Material Symbol name
+  title      VARCHAR(100) NOT NULL,
+  created_at TIMESTAMP    DEFAULT NOW()
+);
+
+-- ── 3. WORKER_PROFILES ────────────────────────────────────
+CREATE TABLE worker_profiles (
+  id               UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id          UUID         UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  specialty        VARCHAR(100) NOT NULL,
+  bio              TEXT,
+  location         VARCHAR(100),
+  status           VARCHAR(20)  DEFAULT 'available'
+                     CHECK (status IN ('available', 'busy')),
+  experience_years SMALLINT     DEFAULT 0,
+  response_time    VARCHAR(50),
+  completed_jobs   INT          DEFAULT 0,
+  rating           NUMERIC(3,2) DEFAULT 0.00,
+  image_url        TEXT,
+  created_at       TIMESTAMP    DEFAULT NOW(),
+  updated_at       TIMESTAMP    DEFAULT NOW()
+);
+
+-- ── 4. WORKER_CATEGORIES ──────────────────────────────────
+CREATE TABLE worker_categories (
+  worker_id   UUID        REFERENCES worker_profiles(id) ON DELETE CASCADE,
+  category_id VARCHAR(50) REFERENCES categories(id)     ON DELETE CASCADE,
+  PRIMARY KEY (worker_id, category_id)
+);
+
+-- ── 5. WORKER_TAGS ────────────────────────────────────────
+CREATE TABLE worker_tags (
+  id        SERIAL      PRIMARY KEY,
+  worker_id UUID        REFERENCES worker_profiles(id) ON DELETE CASCADE,
+  tag       VARCHAR(50) NOT NULL
+);
+
+-- ── 6. WORKER_SERVICES ────────────────────────────────────
+CREATE TABLE worker_services (
+  id        SERIAL       PRIMARY KEY,
+  worker_id UUID         REFERENCES worker_profiles(id) ON DELETE CASCADE,
+  name      VARCHAR(100) NOT NULL,
+  price     INT,                           -- harga dalam Rupiah
+  unit      VARCHAR(30)                    -- 'per kunjungan', 'per jam'
+);
+
+-- ── 7. ORDERS ─────────────────────────────────────────────
+CREATE TABLE orders (
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    UUID        REFERENCES users(id)           ON DELETE SET NULL,
+  worker_id  UUID        REFERENCES worker_profiles(id) ON DELETE SET NULL,
+  tanggal    DATE        NOT NULL,
+  waktu      TIME        NOT NULL,
+  deskripsi  TEXT,
+  alamat     TEXT        NOT NULL,
+  telepon    VARCHAR(20) NOT NULL,
+  status     VARCHAR(20) DEFAULT 'menunggu'
+               CHECK (status IN ('menunggu','dikonfirmasi','selesai','dibatalkan')),
+  created_at TIMESTAMP   DEFAULT NOW(),
+  updated_at TIMESTAMP   DEFAULT NOW()
+);
+
+-- ── 8. REVIEWS ────────────────────────────────────────────
+CREATE TABLE reviews (
+  id         UUID     PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id   UUID     UNIQUE REFERENCES orders(id)           ON DELETE CASCADE,
+  user_id    UUID     REFERENCES users(id)                   ON DELETE SET NULL,
+  worker_id  UUID     REFERENCES worker_profiles(id)         ON DELETE CASCADE,
+  rating     SMALLINT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  comment    TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- ── 9. FAVORITES ──────────────────────────────────────────
+CREATE TABLE favorites (
+  user_id    UUID      REFERENCES users(id)           ON DELETE CASCADE,
+  worker_id  UUID      REFERENCES worker_profiles(id) ON DELETE CASCADE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  PRIMARY KEY (user_id, worker_id)
+);
+
+-- ── 10. NOTIFICATIONS ─────────────────────────────────────
+CREATE TABLE notifications (
+  id         UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    UUID         REFERENCES users(id) ON DELETE CASCADE,
+  icon       VARCHAR(50)  NOT NULL,
+  title      VARCHAR(150) NOT NULL,
+  body       TEXT,
+  href       VARCHAR(255),
+  is_read    BOOLEAN      DEFAULT FALSE,
+  created_at TIMESTAMP    DEFAULT NOW()
+);</code></pre>
+
+  <h3>2.4 Index & Trigger</h3>
+<pre><code>-- ── INDEX untuk performa query ────────────────────────────
+CREATE INDEX idx_workers_location  ON worker_profiles(location);
+CREATE INDEX idx_workers_status    ON worker_profiles(status);
+CREATE INDEX idx_workers_rating    ON worker_profiles(rating DESC);
+CREATE INDEX idx_orders_user_id    ON orders(user_id);
+CREATE INDEX idx_orders_worker_id  ON orders(worker_id);
+CREATE INDEX idx_orders_status     ON orders(status);
+CREATE INDEX idx_reviews_worker_id ON reviews(worker_id);
+CREATE INDEX idx_notifs_user_read  ON notifications(user_id, is_read);
+
+-- ── TRIGGER: auto-update rating setelah review baru ───────
+CREATE OR REPLACE FUNCTION update_worker_rating()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE worker_profiles
+  SET rating = (
+    SELECT ROUND(AVG(rating)::NUMERIC, 2)
+    FROM reviews
+    WHERE worker_id = NEW.worker_id
+  )
+  WHERE id = NEW.worker_id;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_update_rating
+AFTER INSERT OR UPDATE ON reviews
+FOR EACH ROW EXECUTE FUNCTION update_worker_rating();</code></pre>
+
+</div>
+
+<!-- ══════════════════════════════════════════
+     3. API ENDPOINTS
+══════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header" id="api">
+    <h2>3. Dokumentasi API Endpoint</h2>
+    <p>Base URL: https://api.nyambi.id/v1 — REST · JSON · JWT Auth</p>
+  </div>
+
+  <div class="info-box">
+    <strong>Autentikasi:</strong> Semua endpoint bertanda 🔒 memerlukan header
+    <span class="inline-code">Authorization: Bearer &lt;access_token&gt;</span>
+  </div>
+
+  <!-- 3.1 AUTH -->
+  <h3 id="auth">3.1 Autentikasi — <span class="inline-code">/auth</span></h3>
+  <table>
+    <thead>
+      <tr><th>Method</th><th>Endpoint</th><th>Deskripsi</th><th>Auth</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="badge badge-post">POST</span></td><td><code>/auth/register</code></td><td>Daftar akun baru</td><td><span class="badge badge-open">Publik</span></td></tr>
+      <tr><td><span class="badge badge-post">POST</span></td><td><code>/auth/login</code></td><td>Login & dapat token JWT</td><td><span class="badge badge-open">Publik</span></td></tr>
+      <tr><td><span class="badge badge-post">POST</span></td><td><code>/auth/logout</code></td><td>Invalidate refresh token</td><td><span class="badge badge-auth">🔒 JWT</span></td></tr>
+      <tr><td><span class="badge badge-post">POST</span></td><td><code>/auth/refresh</code></td><td>Perbarui access token</td><td><span class="badge badge-auth">🔒 JWT</span></td></tr>
+    </tbody>
+  </table>
+
+<pre><code>// POST /auth/register — Request Body
+{
+  "nama": "Andi Saputra",
+  "email": "andi@email.com",
+  "telepon": "081234567890",
+  "password": "rahasia123"
+}
+
+// POST /auth/login — Response 200
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "expires_in": 900,
+  "user": {
+    "id": "a1b2c3d4-...",
+    "nama": "Andi Saputra",
+    "email": "andi@email.com",
+    "is_worker": false
+  }
+}</code></pre>
+
+  <!-- 3.2 USERS -->
+  <h3 id="users">3.2 Pengguna — <span class="inline-code">/users</span></h3>
+  <table>
+    <thead>
+      <tr><th>Method</th><th>Endpoint</th><th>Deskripsi</th><th>Auth</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="badge badge-get">GET</span></td><td><code>/users/me</code></td><td>Ambil profil sendiri</td><td><span class="badge badge-auth">🔒 JWT</span></td></tr>
+      <tr><td><span class="badge badge-put">PUT</span></td><td><code>/users/me</code></td><td>Update nama, email, telepon</td><td><span class="badge badge-auth">🔒 JWT</span></td></tr>
+      <tr><td><span class="badge badge-put">PUT</span></td><td><code>/users/me/password</code></td><td>Ubah password</td><td><span class="badge badge-auth">🔒 JWT</span></td></tr>
+      <tr><td><span class="badge badge-delete">DELETE</span></td><td><code>/users/me</code></td><td>Hapus akun</td><td><span class="badge badge-auth">🔒 JWT</span></td></tr>
+    </tbody>
+  </table>
+
+<pre><code>// PUT /users/me — Request Body
+{ "nama": "Andi Baru", "email": "baru@email.com", "telepon": "089876543210" }
+
+// PUT /users/me/password — Request Body
+{ "current_password": "lama123", "new_password": "baru456" }</code></pre>
+
+  <!-- 3.3 CATEGORIES -->
+  <h3 id="categories">3.3 Kategori — <span class="inline-code">/categories</span></h3>
+  <table>
+    <thead>
+      <tr><th>Method</th><th>Endpoint</th><th>Deskripsi</th><th>Auth</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="badge badge-get">GET</span></td><td><code>/categories</code></td><td>Semua kategori</td><td><span class="badge badge-open">Publik</span></td></tr>
+      <tr><td><span class="badge badge-get">GET</span></td><td><code>/categories/:id</code></td><td>Detail + daftar pekerja dalam kategori</td><td><span class="badge badge-open">Publik</span></td></tr>
+    </tbody>
+  </table>
+
+<pre><code>// GET /categories — Response 200
+{
+  "data": [
+    { "id": "kebun",   "icon": "grass", "title": "Tukang Kebun",   "worker_count": 150 },
+    { "id": "listrik", "icon": "bolt",  "title": "Tukang Listrik", "worker_count": 98  }
+  ]
+}</code></pre>
+
+</div>
+
+<div class="page">
+
+  <!-- 3.4 WORKERS -->
+  <h3 id="workers">3.4 Pekerja — <span class="inline-code">/workers</span></h3>
+  <table>
+    <thead>
+      <tr><th>Method</th><th>Endpoint</th><th>Deskripsi</th><th>Auth</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="badge badge-get">GET</span></td><td><code>/workers</code></td><td>Daftar pekerja (dengan filter)</td><td><span class="badge badge-open">Publik</span></td></tr>
+      <tr><td><span class="badge badge-get">GET</span></td><td><code>/workers/:id</code></td><td>Detail profil pekerja</td><td><span class="badge badge-open">Publik</span></td></tr>
+      <tr><td><span class="badge badge-get">GET</span></td><td><code>/workers/:id/reviews</code></td><td>Semua ulasan untuk pekerja ini</td><td><span class="badge badge-open">Publik</span></td></tr>
+      <tr><td><span class="badge badge-post">POST</span></td><td><code>/workers</code></td><td>Daftar sebagai pekerja</td><td><span class="badge badge-auth">🔒 JWT</span></td></tr>
+      <tr><td><span class="badge badge-put">PUT</span></td><td><code>/workers/me</code></td><td>Update profil pekerja</td><td><span class="badge badge-auth">🔒 JWT</span></td></tr>
+      <tr><td><span class="badge badge-put">PUT</span></td><td><code>/workers/me/status</code></td><td>Toggle status tersedia/sibuk</td><td><span class="badge badge-auth">🔒 JWT</span></td></tr>
+    </tbody>
+  </table>
+
+  <h4>Query Parameters — GET /workers</h4>
+  <table>
+    <thead><tr><th>Parameter</th><th>Tipe</th><th>Contoh</th><th>Keterangan</th></tr></thead>
+    <tbody>
+      <tr><td><code>q</code></td><td>string</td><td><code>listrik</code></td><td>Cari nama, specialty, bio, tags</td></tr>
+      <tr><td><code>lokasi</code></td><td>string</td><td><code>jakarta</code></td><td>Filter berdasarkan lokasi</td></tr>
+      <tr><td><code>category</code></td><td>string</td><td><code>listrik</code></td><td>Filter berdasarkan ID kategori</td></tr>
+      <tr><td><code>status</code></td><td>string</td><td><code>available</code></td><td>available atau busy</td></tr>
+      <tr><td><code>page</code></td><td>int</td><td><code>1</code></td><td>Halaman (default: 1)</td></tr>
+      <tr><td><code>limit</code></td><td>int</td><td><code>12</code></td><td>Jumlah per halaman (max: 50)</td></tr>
+    </tbody>
+  </table>
+
+<pre><code>// POST /workers — Request Body
+{
+  "specialty": "Tukang Kebun & Taman",
+  "bio": "Pengalaman 5 tahun merawat taman...",
+  "location": "Depok",
+  "experience_years": 5,
+  "response_time": "< 2 jam",
+  "category_ids": ["kebun", "cleaning"],
+  "tags": ["Fast Response", "Berpengalaman"],
+  "services": [
+    { "name": "Potong Rumput",  "price": 150000, "unit": "per kunjungan" },
+    { "name": "Tanam Pohon",    "price": 200000, "unit": "per pohon" },
+    { "name": "Perawatan Taman","price": 300000, "unit": "per bulan" }
+  ]
+}
+
+// GET /workers/:id — Response 200
+{
+  "id": "uuid",
+  "nama": "Budi Santoso",
+  "specialty": "Tukang Listrik & AC",
+  "bio": "Teknisi listrik berpengalaman...",
+  "location": "Jakarta Selatan",
+  "status": "available",
+  "rating": 4.9,
+  "completed_jobs": 312,
+  "experience_years": 8,
+  "response_time": "< 1 jam",
+  "image_url": "https://...",
+  "categories": [{ "id": "listrik", "title": "Tukang Listrik" }],
+  "tags": ["Fast Response", "Verified"],
+  "services": [
+    { "name": "Instalasi Listrik Baru", "price": 250000, "unit": "per titik" },
+    { "name": "Servis & Pasang AC",     "price": 150000, "unit": "per unit"  }
+  ]
+}</code></pre>
+
+  <!-- 3.5 ORDERS -->
+  <h3 id="orders">3.5 Pesanan — <span class="inline-code">/orders</span></h3>
+  <table>
+    <thead>
+      <tr><th>Method</th><th>Endpoint</th><th>Deskripsi</th><th>Auth</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="badge badge-post">POST</span></td><td><code>/orders</code></td><td>Buat pesanan baru</td><td><span class="badge badge-auth">🔒 JWT</span></td></tr>
+      <tr><td><span class="badge badge-get">GET</span></td><td><code>/orders</code></td><td>Riwayat pesanan saya</td><td><span class="badge badge-auth">🔒 JWT</span></td></tr>
+      <tr><td><span class="badge badge-get">GET</span></td><td><code>/orders/:id</code></td><td>Detail satu pesanan</td><td><span class="badge badge-auth">🔒 JWT</span></td></tr>
+      <tr><td><span class="badge badge-put">PUT</span></td><td><code>/orders/:id/cancel</code></td><td>Batalkan pesanan (user, hanya status menunggu)</td><td><span class="badge badge-auth">🔒 JWT</span></td></tr>
+      <tr><td><span class="badge badge-put">PUT</span></td><td><code>/orders/:id/confirm</code></td><td>Konfirmasi pesanan (pekerja)</td><td><span class="badge badge-auth">🔒 JWT</span></td></tr>
+      <tr><td><span class="badge badge-put">PUT</span></td><td><code>/orders/:id/complete</code></td><td>Tandai selesai (pekerja)</td><td><span class="badge badge-auth">🔒 JWT</span></td></tr>
+    </tbody>
+  </table>
+
+<pre><code>// POST /orders — Request Body
+{
+  "worker_id": "uuid-pekerja",
+  "tanggal": "2026-06-20",
+  "waktu": "09:00",
+  "deskripsi": "Perbaikan instalasi listrik kamar mandi lantai 2",
+  "alamat": "Jl. Melati No.12, Jakarta Selatan 12345",
+  "telepon": "081234567890"
+}
+
+// GET /orders?status=menunggu&page=1 — Response 200
+{
+  "data": [
+    {
+      "id": "uuid",
+      "worker": { "id": "uuid", "nama": "Budi Santoso", "image_url": "..." },
+      "tanggal": "2026-06-20",
+      "waktu": "09:00",
+      "alamat": "Jl. Melati No.12...",
+      "status": "menunggu",
+      "created_at": "2026-06-12T10:00:00Z"
+    }
+  ],
+  "meta": { "total": 3, "page": 1, "limit": 10, "total_pages": 1 }
+}</code></pre>
+
+</div>
+
+<div class="page">
+
+  <!-- 3.6 REVIEWS -->
+  <h3 id="reviews">3.6 Ulasan — <span class="inline-code">/reviews</span></h3>
+  <table>
+    <thead>
+      <tr><th>Method</th><th>Endpoint</th><th>Deskripsi</th><th>Auth</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="badge badge-post">POST</span></td><td><code>/reviews</code></td><td>Tulis ulasan (order harus status selesai)</td><td><span class="badge badge-auth">🔒 JWT</span></td></tr>
+      <tr><td><span class="badge badge-get">GET</span></td><td><code>/reviews/me</code></td><td>Semua ulasan yang saya tulis</td><td><span class="badge badge-auth">🔒 JWT</span></td></tr>
+      <tr><td><span class="badge badge-get">GET</span></td><td><code>/workers/:id/reviews</code></td><td>Ulasan untuk pekerja tertentu</td><td><span class="badge badge-open">Publik</span></td></tr>
+    </tbody>
+  </table>
+
+<pre><code>// POST /reviews — Request Body
+{
+  "order_id": "uuid-pesanan",
+  "rating": 5,
+  "comment": "Hasil kerjaan sangat rapi, tepat waktu, dan harga sesuai!"
+}
+
+// GET /reviews/me — Response 200
+{
+  "data": [
+    {
+      "id": "uuid",
+      "worker": { "id": "uuid", "nama": "Budi Santoso", "specialty": "..." },
+      "rating": 5,
+      "comment": "Hasil kerjaan sangat rapi...",
+      "created_at": "2026-06-10T14:00:00Z"
+    }
+  ]
+}</code></pre>
+
+  <!-- 3.7 FAVORITES -->
+  <h3 id="favorites">3.7 Favorit — <span class="inline-code">/favorites</span></h3>
+  <table>
+    <thead>
+      <tr><th>Method</th><th>Endpoint</th><th>Deskripsi</th><th>Auth</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="badge badge-get">GET</span></td><td><code>/favorites</code></td><td>Daftar pekerja favorit saya</td><td><span class="badge badge-auth">🔒 JWT</span></td></tr>
+      <tr><td><span class="badge badge-post">POST</span></td><td><code>/favorites/:worker_id</code></td><td>Tambah ke favorit</td><td><span class="badge badge-auth">🔒 JWT</span></td></tr>
+      <tr><td><span class="badge badge-delete">DELETE</span></td><td><code>/favorites/:worker_id</code></td><td>Hapus dari favorit</td><td><span class="badge badge-auth">🔒 JWT</span></td></tr>
+    </tbody>
+  </table>
+
+  <!-- 3.8 NOTIFICATIONS -->
+  <h3 id="notifications">3.8 Notifikasi — <span class="inline-code">/notifications</span></h3>
+  <table>
+    <thead>
+      <tr><th>Method</th><th>Endpoint</th><th>Deskripsi</th><th>Auth</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="badge badge-get">GET</span></td><td><code>/notifications</code></td><td>Semua notifikasi saya</td><td><span class="badge badge-auth">🔒 JWT</span></td></tr>
+      <tr><td><span class="badge badge-put">PUT</span></td><td><code>/notifications/:id/read</code></td><td>Tandai satu notifikasi dibaca</td><td><span class="badge badge-auth">🔒 JWT</span></td></tr>
+      <tr><td><span class="badge badge-put">PUT</span></td><td><code>/notifications/read-all</code></td><td>Tandai semua dibaca</td><td><span class="badge badge-auth">🔒 JWT</span></td></tr>
+    </tbody>
+  </table>
+
+  <!-- 3.9 SEARCH -->
+  <h3 id="search">3.9 Pencarian — <span class="inline-code">/search</span></h3>
+  <table>
+    <thead>
+      <tr><th>Method</th><th>Endpoint</th><th>Deskripsi</th><th>Auth</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="badge badge-get">GET</span></td><td><code>/search?q=...&amp;lokasi=...</code></td><td>Cari pekerja dan kategori sekaligus</td><td><span class="badge badge-open">Publik</span></td></tr>
+    </tbody>
+  </table>
+
+<pre><code>// GET /search?q=listrik&lokasi=jakarta — Response 200
+{
+  "workers": [
+    { "id": "uuid", "nama": "Budi Santoso", "specialty": "Tukang Listrik & AC",
+      "location": "Jakarta Selatan", "rating": 4.9, "status": "available" }
+  ],
+  "categories": [
+    { "id": "listrik", "title": "Tukang Listrik", "worker_count": 98 }
+  ]
+}</code></pre>
+
+</div>
+
+<!-- ══════════════════════════════════════════
+     4. KONVENSI
+══════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header" id="convention">
+    <h2>4. Konvensi & Standar API</h2>
+    <p>Format response, error handling, dan paginasi</p>
+  </div>
+
+  <h3>Format Response Standar</h3>
+<pre><code>// Sukses — single item
+{
+  "data": { ... },
+  "message": "Berhasil"
+}
+
+// Sukses — koleksi
+{
+  "data": [ ... ],
+  "meta": {
+    "total": 50,
+    "page": 1,
+    "limit": 12,
+    "total_pages": 5
+  }
+}
+
+// Error
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Email sudah terdaftar",
+    "details": { "field": "email", "reason": "duplicate" }
+  }
+}</code></pre>
+
+  <h3>HTTP Status Codes</h3>
+  <table>
+    <thead><tr><th>Code</th><th>Arti</th><th>Kapan digunakan</th></tr></thead>
+    <tbody>
+      <tr><td><strong>200</strong></td><td>OK</td><td>Request berhasil</td></tr>
+      <tr><td><strong>201</strong></td><td>Created</td><td>Resource baru berhasil dibuat</td></tr>
+      <tr><td><strong>204</strong></td><td>No Content</td><td>Berhasil, tidak ada body (DELETE)</td></tr>
+      <tr><td><strong>400</strong></td><td>Bad Request</td><td>Input tidak valid / body salah format</td></tr>
+      <tr><td><strong>401</strong></td><td>Unauthorized</td><td>Token tidak ada atau sudah expired</td></tr>
+      <tr><td><strong>403</strong></td><td>Forbidden</td><td>Token valid tapi tidak punya hak akses</td></tr>
+      <tr><td><strong>404</strong></td><td>Not Found</td><td>Resource tidak ditemukan</td></tr>
+      <tr><td><strong>409</strong></td><td>Conflict</td><td>Duplikat data (email sudah terdaftar)</td></tr>
+      <tr><td><strong>422</strong></td><td>Unprocessable</td><td>Validasi bisnis gagal (order sudah direview)</td></tr>
+      <tr><td><strong>500</strong></td><td>Server Error</td><td>Kesalahan internal server</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Aturan JWT Token</h3>
+  <table>
+    <thead><tr><th>Token</th><th>Masa Berlaku</th><th>Penyimpanan di Client</th></tr></thead>
+    <tbody>
+      <tr><td>Access Token</td><td>15 menit</td><td>Memory (tidak di localStorage)</td></tr>
+      <tr><td>Refresh Token</td><td>30 hari</td><td>HTTP-only Cookie</td></tr>
+    </tbody>
+  </table>
+
+</div>
+
+<!-- ══════════════════════════════════════════
+     5. CATATAN IMPLEMENTASI
+══════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header" id="notes">
+    <h2>5. Catatan Implementasi</h2>
+    <p>Hal-hal penting saat membangun backend</p>
+  </div>
+
+  <h3>Aturan Bisnis Penting</h3>
+  <table>
+    <thead><tr><th>Fitur</th><th>Aturan</th></tr></thead>
+    <tbody>
+      <tr><td>Review</td><td>Hanya bisa ditulis jika status order = <code>selesai</code> dan belum ada review untuk order tersebut (UNIQUE constraint pada <code>order_id</code>)</td></tr>
+      <tr><td>Batalkan Order</td><td>Hanya bisa jika status = <code>menunggu</code>. Setelah dikonfirmasi tidak bisa dibatalkan via API biasa</td></tr>
+      <tr><td>Daftar Pekerja</td><td><code>POST /workers</code> akan set <code>users.is_worker = true</code> dan membuat baris baru di <code>worker_profiles</code></td></tr>
+      <tr><td>Rating Otomatis</td><td>Rating di <code>worker_profiles</code> diupdate via trigger setiap kali ada INSERT/UPDATE di tabel <code>reviews</code></td></tr>
+      <tr><td>Kategori Multi-select</td><td>Satu pekerja bisa memiliki banyak kategori — tersimpan di junction table <code>worker_categories</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Rekomendasi Stack Backend</h3>
+  <table>
+    <thead><tr><th>Layer</th><th>Rekomendasi</th><th>Alternatif</th></tr></thead>
+    <tbody>
+      <tr><td>Runtime</td><td>Node.js (Express / Fastify)</td><td>Go (Fiber), Python (FastAPI)</td></tr>
+      <tr><td>Database</td><td>PostgreSQL 15+</td><td>MySQL 8</td></tr>
+      <tr><td>ORM</td><td>Prisma</td><td>Drizzle, Knex</td></tr>
+      <tr><td>Auth</td><td>JWT + bcrypt</td><td>Auth0, Supabase Auth</td></tr>
+      <tr><td>Storage Gambar</td><td>Cloudinary / Supabase Storage</td><td>AWS S3</td></tr>
+      <tr><td>Hosting DB</td><td>Supabase / Railway</td><td>AWS RDS, Neon</td></tr>
+    </tbody>
+  </table>
+
+  <div class="warn-box">
+    <strong>Catatan Migrasi dari Frontend:</strong> Saat ini frontend menggunakan <code>localStorage</code>
+    sebagai pengganti database (nyambi_user, nyambi_orders, nyambi_favorites, nyambi_reviews, nyambi_notifs).
+    Saat backend sudah siap, ganti semua hook localStorage dengan pemanggilan ke API endpoint yang didokumentasikan di sini.
+  </div>
+
+  <h3>Urutan Implementasi yang Disarankan</h3>
+  <table>
+    <thead><tr><th>Fase</th><th>Yang Dibangun</th></tr></thead>
+    <tbody>
+      <tr><td>Fase 1</td><td>Setup DB + migrasi tabel + seed data categories & workers</td></tr>
+      <tr><td>Fase 2</td><td>Auth (register, login, JWT middleware)</td></tr>
+      <tr><td>Fase 3</td><td>CRUD Workers & Categories</td></tr>
+      <tr><td>Fase 4</td><td>Orders (create, list, update status)</td></tr>
+      <tr><td>Fase 5</td><td>Reviews, Favorites, Notifications</td></tr>
+      <tr><td>Fase 6</td><td>Search & filter dengan full-text PostgreSQL</td></tr>
+      <tr><td>Fase 7</td><td>Upload gambar profil pekerja</td></tr>
+    </tbody>
+  </table>
+
+  <br><br>
+  <div style="text-align:center; color:#888; font-size:12px; border-top: 1px solid #e0ede0; padding-top: 20px; margin-top: 40px;">
+    Nyambi — Perancangan Database & API v1.0 · Juni 2026 · Dokumen ini bersifat internal
+  </div>
+</div>
+
+<!-- ── PRINT BUTTON ── -->
+<div class="no-print" style="position:fixed; bottom:24px; right:24px;">
+  <button onclick="window.print()" style="
+    background: #2d5a27; color: #fff; border: none; padding: 14px 28px;
+    border-radius: 50px; font-size: 15px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25); display: flex; align-items: center; gap: 8px;
+  ">
+    🖨️ Simpan sebagai PDF
+  </button>
+</div>
+
+</body>
+</html>

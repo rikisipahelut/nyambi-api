@@ -1,0 +1,455 @@
+# ============================================================
+# NYAMBI API — REST Client
+# VS Code: install extension "REST Client" (humao.rest-client)
+# JetBrains: built-in HTTP Client support
+# ============================================================
+
+@baseUrl = http://127.0.0.1:8000/api
+@contentType = application/json
+
+# Setelah login, copy access_token ke sini:
+@token = PASTE_TOKEN_DISINI
+
+# ID untuk testing (isi setelah dapat dari response):
+@workerId    = PASTE_WORKER_ID
+@orderId     = PASTE_ORDER_ID
+@reviewId    = PASTE_REVIEW_ID
+@notifId     = PASTE_NOTIF_ID
+
+
+# ==============================================================
+# 1. AUTH
+# ==============================================================
+
+### [Auth] Register akun baru
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "nama": "Coba User",
+  "email": "coba@nyambi.id",
+  "telepon": "089999999999",
+  "password": "password"
+}
+
+###
+
+### [Auth] Login — pelanggan
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "andi@gmail.com",
+  "password": "password"
+}
+
+###
+
+### [Auth] Login — pekerja listrik
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "budi.listrik@gmail.com",
+  "password": "password"
+}
+
+###
+
+### [Auth] Login — pekerja kebun
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "ahmad.kebun@gmail.com",
+  "password": "password"
+}
+
+###
+
+### [Auth] Refresh token
+POST {{baseUrl}}/auth/refresh
+Authorization: Bearer {{token}}
+
+###
+
+### [Auth] Logout
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{token}}
+
+###
+
+
+# ==============================================================
+# 2. USER — Profil Saya
+# ==============================================================
+
+### [User] Lihat profil saya
+GET {{baseUrl}}/users/me
+Authorization: Bearer {{token}}
+
+###
+
+### [User] Update profil
+PUT {{baseUrl}}/users/me
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "nama": "Andi Saputra Update",
+  "telepon": "081234567999"
+}
+
+###
+
+### [User] Ganti password
+PUT {{baseUrl}}/users/me/password
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "current_password": "password",
+  "new_password": "passwordbaru123"
+}
+
+###
+
+### [User] Hapus akun
+DELETE {{baseUrl}}/users/me
+Authorization: Bearer {{token}}
+
+###
+
+
+# ==============================================================
+# 3. KATEGORI
+# ==============================================================
+
+### [Kategori] Semua kategori
+GET {{baseUrl}}/categories
+
+###
+
+### [Kategori] Detail + pekerja dalam kategori
+GET {{baseUrl}}/categories/listrik
+
+###
+
+### [Kategori] Kategori lainnya untuk dicoba
+# kebun / cleaning / bangunan / ac / cat / plumber /
+# kayu / las / laundry / baby_sitter / driver / pijat /
+# foto_video / makeup / catering / wedding / it / fitness
+GET {{baseUrl}}/categories/kebun
+
+###
+
+
+# ==============================================================
+# 4. PEKERJA
+# ==============================================================
+
+### [Pekerja] Daftar semua pekerja
+GET {{baseUrl}}/workers
+
+###
+
+### [Pekerja] Filter: cari keyword
+GET {{baseUrl}}/workers?q=listrik
+
+###
+
+### [Pekerja] Filter: berdasarkan lokasi
+GET {{baseUrl}}/workers?lokasi=jakarta
+
+###
+
+### [Pekerja] Filter: berdasarkan kategori
+GET {{baseUrl}}/workers?category=cleaning
+
+###
+
+### [Pekerja] Filter: status available + lokasi + halaman
+GET {{baseUrl}}/workers?status=available&lokasi=jakarta&page=1&limit=5
+
+###
+
+### [Pekerja] Filter kombinasi: keyword + lokasi
+GET {{baseUrl}}/workers?q=kebun&lokasi=depok
+
+###
+
+### [Pekerja] Detail profil pekerja — isi @workerId dari response GET /workers
+GET {{baseUrl}}/workers/{{workerId}}
+
+###
+
+### [Pekerja] Ulasan pekerja tertentu
+GET {{baseUrl}}/workers/{{workerId}}/reviews
+
+###
+
+### [Pekerja] Daftar sebagai pekerja (login sebagai pelanggan dulu)
+POST {{baseUrl}}/workers
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "specialty": "Tukang Kebun & Taman",
+  "bio": "Berpengalaman 5 tahun menangani taman residensial. Melayani area Depok dan sekitarnya.",
+  "location": "Depok",
+  "experience_years": 5,
+  "response_time": "< 2 jam",
+  "category_ids": ["kebun", "taman"],
+  "tags": ["Fast Response", "Berpengalaman", "Harga Terjangkau"],
+  "services": [
+    { "name": "Potong Rumput",    "price": 150000, "unit": "per kunjungan" },
+    { "name": "Perawatan Taman", "price": 300000, "unit": "per bulan" }
+  ]
+}
+
+###
+
+### [Pekerja] Update profil pekerja (login sebagai pekerja)
+PUT {{baseUrl}}/workers/me
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "bio": "Bio yang diperbarui. Pengalaman lebih dari 8 tahun.",
+  "response_time": "< 1 jam",
+  "tags": ["Fast Response", "Berpengalaman", "Tersertifikasi", "Bergaransi"]
+}
+
+###
+
+### [Pekerja] Toggle status (available / busy)
+PUT {{baseUrl}}/workers/me/status
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "status": "busy"
+}
+
+###
+
+### [Pekerja] Set kembali available
+PUT {{baseUrl}}/workers/me/status
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "status": "available"
+}
+
+###
+
+
+# ==============================================================
+# 5. PESANAN
+# ==============================================================
+
+### [Pesanan] Buat pesanan baru (login sebagai pelanggan)
+# Isi worker_id dari response GET /workers
+POST {{baseUrl}}/orders
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "worker_id": "{{workerId}}",
+  "tanggal": "2026-07-01",
+  "waktu": "09:00",
+  "deskripsi": "Perbaikan instalasi listrik di kamar mandi, ada kabel yang terkelupas dan MCB sering jatuh.",
+  "alamat": "Jl. Kemang Raya No.45, Jakarta Selatan 12730",
+  "telepon": "081234567890"
+}
+
+###
+
+### [Pesanan] Riwayat pesanan saya (semua status)
+GET {{baseUrl}}/orders
+Authorization: Bearer {{token}}
+
+###
+
+### [Pesanan] Filter pesanan berdasarkan status
+GET {{baseUrl}}/orders?status=menunggu
+Authorization: Bearer {{token}}
+
+###
+
+### [Pesanan] Filter: dikonfirmasi
+GET {{baseUrl}}/orders?status=dikonfirmasi
+Authorization: Bearer {{token}}
+
+###
+
+### [Pesanan] Filter: selesai
+GET {{baseUrl}}/orders?status=selesai
+Authorization: Bearer {{token}}
+
+###
+
+### [Pesanan] Detail satu pesanan — isi @orderId dari response GET /orders
+GET {{baseUrl}}/orders/{{orderId}}
+Authorization: Bearer {{token}}
+
+###
+
+### [Pesanan] Batalkan pesanan (pelanggan, hanya status menunggu)
+PUT {{baseUrl}}/orders/{{orderId}}/cancel
+Authorization: Bearer {{token}}
+
+###
+
+### [Pesanan] Konfirmasi pesanan (login sebagai pekerja)
+PUT {{baseUrl}}/orders/{{orderId}}/confirm
+Authorization: Bearer {{token}}
+
+###
+
+### [Pesanan] Tandai selesai (login sebagai pekerja)
+PUT {{baseUrl}}/orders/{{orderId}}/complete
+Authorization: Bearer {{token}}
+
+###
+
+
+# ==============================================================
+# 6. ULASAN
+# ==============================================================
+
+### [Ulasan] Tulis ulasan (order harus status selesai)
+# Isi order_id dari pesanan yang sudah selesai
+POST {{baseUrl}}/reviews
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "order_id": "{{orderId}}",
+  "rating": 5,
+  "comment": "Pekerjaannya sangat rapi dan tepat waktu. Sangat puas dengan hasilnya!"
+}
+
+###
+
+### [Ulasan] Rating 4 — feedback baik dengan catatan kecil
+POST {{baseUrl}}/reviews
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "order_id": "{{orderId}}",
+  "rating": 4,
+  "comment": "Hasil bagus, hanya agak sedikit telat datang tapi overall puas."
+}
+
+###
+
+### [Ulasan] Semua ulasan yang saya tulis
+GET {{baseUrl}}/reviews/me
+Authorization: Bearer {{token}}
+
+###
+
+
+# ==============================================================
+# 7. FAVORIT
+# ==============================================================
+
+### [Favorit] Daftar pekerja favorit saya
+GET {{baseUrl}}/favorites
+Authorization: Bearer {{token}}
+
+###
+
+### [Favorit] Tambah pekerja ke favorit
+POST {{baseUrl}}/favorites/{{workerId}}
+Authorization: Bearer {{token}}
+
+###
+
+### [Favorit] Hapus dari favorit
+DELETE {{baseUrl}}/favorites/{{workerId}}
+Authorization: Bearer {{token}}
+
+###
+
+
+# ==============================================================
+# 8. NOTIFIKASI
+# ==============================================================
+
+### [Notifikasi] Semua notifikasi saya
+GET {{baseUrl}}/notifications
+Authorization: Bearer {{token}}
+
+###
+
+### [Notifikasi] Tandai satu notifikasi dibaca
+PUT {{baseUrl}}/notifications/{{notifId}}/read
+Authorization: Bearer {{token}}
+
+###
+
+### [Notifikasi] Tandai SEMUA notifikasi dibaca
+PUT {{baseUrl}}/notifications/read-all
+Authorization: Bearer {{token}}
+
+###
+
+
+# ==============================================================
+# 9. PENCARIAN
+# ==============================================================
+
+### [Search] Cari keyword "listrik" di Jakarta
+GET {{baseUrl}}/search?q=listrik&lokasi=jakarta
+
+###
+
+### [Search] Cari cleaning service
+GET {{baseUrl}}/search?q=cleaning
+
+###
+
+### [Search] Cari keyword "wedding" di Bandung
+GET {{baseUrl}}/search?q=wedding&lokasi=bandung
+
+###
+
+### [Search] Cari tanpa keyword — semua (lokasi Jakarta)
+GET {{baseUrl}}/search?lokasi=jakarta
+
+###
+
+### [Search] Cari keyword "budi"
+GET {{baseUrl}}/search?q=budi
+
+###
+
+
+# ==============================================================
+# 10. SKENARIO LENGKAP (urutan testing end-to-end)
+# ==============================================================
+#
+# 1. POST /auth/login (andi@gmail.com)           → copy token → tempel ke @token
+# 2. GET  /workers                               → copy salah satu id → tempel ke @workerId
+# 3. GET  /workers/{{workerId}}                  → lihat detail pekerja
+# 4. POST /favorites/{{workerId}}                → simpan ke favorit
+# 5. POST /orders                                → buat pesanan → copy id → @orderId
+# 6. GET  /orders/{{orderId}}                    → cek status pesanan
+#
+# -- Ganti ke akun pekerja --
+# 7. POST /auth/login (budi.listrik@gmail.com)   → copy token → tempel ke @token
+# 8. GET  /orders?status=menunggu                → lihat pesanan masuk
+# 9. PUT  /orders/{{orderId}}/confirm            → konfirmasi pesanan
+# 10. PUT /orders/{{orderId}}/complete           → tandai selesai
+#
+# -- Ganti kembali ke pelanggan --
+# 11. POST /auth/login (andi@gmail.com)          → copy token → tempel ke @token
+# 12. POST /reviews                              → tulis ulasan
+# 13. GET  /workers/{{workerId}}/reviews         → lihat ulasan terbaru muncul
+# 14. GET  /notifications                        → cek notifikasi
+# 15. PUT  /notifications/read-all              → tandai semua dibaca
+#
