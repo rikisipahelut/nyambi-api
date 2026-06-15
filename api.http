@@ -428,9 +428,214 @@ GET {{baseUrl}}/search?q=budi
 
 ###
 
+### [Search] Cari tour guide di Bali
+GET {{baseUrl}}/search?q=tour&lokasi=bali
+
+###
+
+### [Search] Cari jastip
+GET {{baseUrl}}/search?q=jastip
+
+###
+
 
 # ==============================================================
-# 10. SKENARIO LENGKAP (urutan testing end-to-end)
+# 10. TRAVELING — Kategori & Pekerja
+# ==============================================================
+# Akun pekerja traveling untuk testing:
+#   Guide Bali   : reza.guide@gmail.com / password
+#   Travel Planner: ayu.planner@gmail.com / password
+#   Teman Trip   : dika.travel@gmail.com / password
+#   Jastip       : bagas.jastip@gmail.com / password
+#   Porter       : rizky.porter@gmail.com / password
+#   Ticketing    : sinta.tiket@gmail.com / password
+#   Sewa Motor   : andre.motor@gmail.com / password
+
+### [Travel] Semua kategori traveling
+GET {{baseUrl}}/categories/tour_guide
+
+###
+
+### [Travel] Kategori Travel Planner
+GET {{baseUrl}}/categories/travel_planner
+
+###
+
+### [Travel] Kategori Jastip
+GET {{baseUrl}}/categories/jastip
+
+###
+
+### [Travel] Kategori Teman Traveling
+GET {{baseUrl}}/categories/teman_traveling
+
+###
+
+### [Travel] Kategori Porter & Angkat Koper
+GET {{baseUrl}}/categories/porter
+
+###
+
+### [Travel] Kategori Ticketing & Hotel
+GET {{baseUrl}}/categories/ticketing
+
+###
+
+### [Travel] Kategori Sewa Motor
+GET {{baseUrl}}/categories/sewa_motor
+
+###
+
+### [Travel] Filter pekerja: tour guide di Bali
+GET {{baseUrl}}/workers?category=tour_guide&lokasi=bali
+
+###
+
+### [Travel] Filter pekerja: travel planner
+GET {{baseUrl}}/workers?category=travel_planner
+
+###
+
+### [Travel] Filter pekerja: jastip
+GET {{baseUrl}}/workers?category=jastip
+
+###
+
+### [Travel] Filter pekerja: teman traveling
+GET {{baseUrl}}/workers?category=teman_traveling
+
+###
+
+### [Travel] Filter pekerja: porter
+GET {{baseUrl}}/workers?category=porter
+
+###
+
+### [Travel] Filter pekerja: ticketing
+GET {{baseUrl}}/workers?category=ticketing
+
+###
+
+### [Travel] Filter pekerja: sewa motor di Bali
+GET {{baseUrl}}/workers?category=sewa_motor&lokasi=bali
+
+###
+
+### [Travel] Pesan tour guide (isi workerId dari GET /workers?category=tour_guide)
+POST {{baseUrl}}/orders
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "worker_id": "{{workerId}}",
+  "tanggal": "2026-07-15",
+  "waktu": "07:00",
+  "deskripsi": "Private tour Ubud full day untuk 2 orang. Ingin mengunjungi Tegallalang Rice Terrace, Tirta Empul, dan Monkey Forest. Mohon guide bisa berbahasa Inggris.",
+  "alamat": "Padma Hotel Legian, Jl. Padma No.1, Legian, Bali 80361",
+  "telepon": "081234567890"
+}
+
+###
+
+### [Travel] Pesan travel planner — susun itinerary
+POST {{baseUrl}}/orders
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "worker_id": "{{workerId}}",
+  "tanggal": "2026-07-10",
+  "waktu": "10:00",
+  "deskripsi": "Butuh itinerary liburan keluarga ke Lombok 5 hari 4 malam untuk 4 orang (2 dewasa, 2 anak). Budget sekitar 10 juta all-in. Mohon rekomendasikan hotel dan aktivitas ramah anak.",
+  "alamat": "Konsultasi Online via WhatsApp / Zoom",
+  "telepon": "081234567890"
+}
+
+###
+
+### [Travel] Pesan jastip dari Korea
+POST {{baseUrl}}/orders
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "worker_id": "{{workerId}}",
+  "tanggal": "2026-07-20",
+  "waktu": "09:00",
+  "deskripsi": "Titip beli skincare dari Olive Young Seoul: COSRX Snail Mucin 100ml x2, Laneige Lip Sleeping Mask, dan Some By Mi AHA BHA PHA toner. Total estimasi KRW 150.000. Minta foto struk asli.",
+  "alamat": "Jl. Cempaka Putih Barat No.10, Jakarta Pusat 10520",
+  "telepon": "081234567890"
+}
+
+###
+
+### [Travel] Pesan teman traveling
+POST {{baseUrl}}/orders
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "worker_id": "{{workerId}}",
+  "tanggal": "2026-08-01",
+  "waktu": "08:00",
+  "deskripsi": "Butuh teman trip solo ke Dieng selama 2 hari 1 malam. Rencana ke Kawah Sikidang, Telaga Warna, dan Candi Arjuna. Kalau bisa sekaligus dokumentasi foto untuk konten media sosial.",
+  "alamat": "Basecamp: Terminal Wonosobo, Jl. HOS Cokroaminoto, Wonosobo",
+  "telepon": "081234567890"
+}
+
+###
+
+### [Travel] Pesan porter bandara
+POST {{baseUrl}}/orders
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "worker_id": "{{workerId}}",
+  "tanggal": "2026-07-05",
+  "waktu": "14:00",
+  "deskripsi": "Butuh bantuan porter untuk 3 koper besar dan 2 tas kabin di Terminal 3 Soekarno-Hatta. Penerbangan ke Bali pukul 16.00. Tolong bantu dari area drop-off sampai check-in counter.",
+  "alamat": "Terminal 3 Bandara Soekarno-Hatta, Tangerang",
+  "telepon": "081234567890"
+}
+
+###
+
+### [Travel] Pesan jasa ticketing
+POST {{baseUrl}}/orders
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "worker_id": "{{workerId}}",
+  "tanggal": "2026-07-08",
+  "waktu": "10:00",
+  "deskripsi": "Tolong carikan tiket pesawat Jakarta–Tokyo PP tanggal 1–10 Agustus untuk 2 orang dewasa. Budget tiket max 8 juta/orang PP. Sekaligus booking hotel bintang 3 di area Shinjuku untuk 9 malam.",
+  "alamat": "Konsultasi Online",
+  "telepon": "081234567890"
+}
+
+###
+
+### [Travel] Pesan sewa motor di Bali
+POST {{baseUrl}}/orders
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "worker_id": "{{workerId}}",
+  "tanggal": "2026-07-12",
+  "waktu": "08:00",
+  "deskripsi": "Sewa 1 unit motor matic selama 3 hari (12–14 Juli). Antar ke Kuta Beach Hotel, Jl. Pantai Kuta. Mohon sertakan helm 2 buah dan jas hujan.",
+  "alamat": "Kuta Beach Hotel, Jl. Pantai Kuta, Kuta, Bali 80361",
+  "telepon": "081234567890"
+}
+
+###
+
+
+# ==============================================================
+# 12. SKENARIO LENGKAP (urutan testing end-to-end)
 # ==============================================================
 #
 # 1. POST /auth/login (andi@gmail.com)           → copy token → tempel ke @token
