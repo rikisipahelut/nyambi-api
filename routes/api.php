@@ -21,6 +21,7 @@ Route::get('categories',      [CategoryController::class, 'index']);
 Route::get('categories/{id}', [CategoryController::class, 'show']);
 
 Route::get('workers',              [WorkerController::class, 'index']);
+Route::middleware('auth:api')->get('workers/me', [WorkerController::class, 'showMe']);
 Route::get('workers/{id}',         [WorkerController::class, 'show']);
 Route::get('workers/{id}/reviews', [WorkerController::class, 'reviews']);
 
@@ -37,6 +38,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/',        [UserController::class, 'me']);
         Route::put('/',        [UserController::class, 'update']);
         Route::put('password', [UserController::class, 'updatePassword']);
+        Route::post('avatar',  [UserController::class, 'uploadAvatar']);
         Route::delete('/',     [UserController::class, 'destroy']);
     });
 

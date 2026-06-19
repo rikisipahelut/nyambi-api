@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\WorkerProfile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class WorkerController extends Controller
 {
@@ -130,6 +131,25 @@ class WorkerController extends Controller
         ], 201);
     }
 
+    public function showMe(): JsonResponse
+    {
+        $user   = auth('api')->user();
+        $worker = $user->workerProfile;
+
+        if (!$worker) {
+            return response()->json([
+                'error' => ['code' => 'NOT_WORKER', 'message' => 'Profil pekerja tidak ditemukan'],
+            ], 404);
+        }
+
+        return response()->json([
+            'data' => $this->formatWorker(
+                $worker->load(['categories', 'tags', 'services', 'user']),
+                full: true
+            ),
+        ]);
+    }
+
     public function update(Request $request): JsonResponse
     {
         $user   = auth('api')->user();
@@ -212,7 +232,7 @@ class WorkerController extends Controller
             'completed_jobs'   => $w->completed_jobs,
             'experience_years' => $w->experience_years,
             'response_time'    => $w->response_time,
-            'image_url'        => $w->image_url,
+            'image_url'        => $w->image_url ?? ($w->user?->avatar ? Storage::disk('public')->url($w->user->avatar) : null),
         ];
 
         if ($full) {
