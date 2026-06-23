@@ -3,6 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Favorite;
+use App\Models\Notification;
+use App\Models\Order;
+use App\Models\Review;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -25,6 +29,20 @@ class UserController extends Controller
                     ? Storage::disk('public')->url($user->avatar)
                     : null,
                 'created_at' => $user->created_at,
+            ],
+        ]);
+    }
+
+    public function stats(): JsonResponse
+    {
+        $userId = auth('api')->id();
+
+        return response()->json([
+            'data' => [
+                'orders'               => Order::where('user_id', $userId)->count(),
+                'favorites'            => Favorite::where('user_id', $userId)->count(),
+                'reviews'              => Review::where('user_id', $userId)->count(),
+                'unread_notifications' => Notification::where('user_id', $userId)->where('is_read', false)->count(),
             ],
         ]);
     }

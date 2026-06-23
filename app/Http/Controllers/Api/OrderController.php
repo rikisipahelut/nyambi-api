@@ -34,7 +34,7 @@ class OrderController extends Controller
         $user  = auth('api')->user();
         $query = Order::with('worker.user');
 
-        if ($user->is_worker && $user->workerProfile) {
+        if ($user->is_worker && $user->workerProfile && $request->as !== 'customer') {
             $query->where('worker_id', $user->workerProfile->id);
         } else {
             $query->where('user_id', $user->id);

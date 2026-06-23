@@ -36,6 +36,7 @@ Route::middleware('auth:api')->group(function () {
 
     Route::prefix('users/me')->group(function () {
         Route::get('/',        [UserController::class, 'me']);
+        Route::get('stats',    [UserController::class, 'stats']);
         Route::put('/',        [UserController::class, 'update']);
         Route::put('password', [UserController::class, 'updatePassword']);
         Route::post('avatar',  [UserController::class, 'uploadAvatar']);
