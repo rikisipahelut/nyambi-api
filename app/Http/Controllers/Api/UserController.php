@@ -35,14 +35,22 @@ class UserController extends Controller
 
     public function stats(): JsonResponse
     {
-        $userId = auth('api')->id();
+        $user = auth('api')->user();
+
+        $incomingOrders = 0;
+        if ($user->is_worker && $user->workerProfile) {
+            $incomingOrders = Order::where('worker_id', $user->workerProfile->id)
+                ->where('status', 'menunggu')
+                ->count();
+        }
 
         return response()->json([
             'data' => [
-                'orders'               => Order::where('user_id', $userId)->count(),
-                'favorites'            => Favorite::where('user_id', $userId)->count(),
-                'reviews'              => Review::where('user_id', $userId)->count(),
-                'unread_notifications' => Notification::where('user_id', $userId)->where('is_read', false)->count(),
+                'orders'               => Order::where('user_id', $user->id)->count(),
+                'favorites'            => Favorite::where('user_id', $user->id)->count(),
+                'reviews'              => Review::where('user_id', $user->id)->count(),
+                'unread_notifications' => Notification::where('user_id', $user->id)->where('is_read', false)->count(),
+                'incoming_orders'      => $incomingOrders,
             ],
         ]);
     }

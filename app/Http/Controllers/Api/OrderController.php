@@ -21,7 +21,16 @@ class OrderController extends Controller
             'telepon'    => 'required|string|max:20',
         ]);
 
-        $order = Order::create([...$validated, 'user_id' => auth('api')->id()]);
+        $user   = auth('api')->user();
+        $worker = WorkerProfile::find($validated['worker_id']);
+
+        if ($worker && $worker->user_id === $user->id) {
+            return response()->json([
+                'error' => ['code' => 'SELF_ORDER', 'message' => 'Anda tidak dapat memesan jasa diri sendiri.'],
+            ], 422);
+        }
+
+        $order = Order::create([...$validated, 'user_id' => $user->id]);
 
         return response()->json([
             'data'    => $this->formatOrder($order->load('worker.user')),
@@ -32,7 +41,7 @@ class OrderController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user  = auth('api')->user();
-        $query = Order::with('worker.user');
+        $query = Order::with('worker.user', 'user');
 
         if ($user->is_worker && $user->workerProfile && $request->as !== 'customer') {
             $query->where('worker_id', $user->workerProfile->id);
@@ -94,14 +103,18 @@ class OrderController extends Controller
 
     public function complete(string $id): JsonResponse
     {
-        $response = $this->workerUpdateStatus($id, 'selesai', 'dikonfirmasi', 'Pesanan selesai');
+        $order = Order::with('worker.user', 'user')->where('user_id', auth('api')->id())->findOrFail($id);
 
-        if ($response->getStatusCode() === 200) {
-            $order = Order::find(json_decode($response->getContent())->data->id ?? null);
-            $order?->worker?->increment('completed_jobs');
+        if ($order->status !== 'dikonfirmasi') {
+            return response()->json([
+                'error' => ['code' => 'INVALID_STATUS', 'message' => 'Pesanan harus dikonfirmasi dulu sebelum diselesaikan'],
+            ], 422);
         }
 
-        return $response;
+        $order->update(['status' => 'selesai']);
+        $order->worker?->increment('completed_jobs');
+
+        return response()->json(['data' => $this->formatOrder($order), 'message' => 'Pesanan selesai']);
     }
 
     private function workerUpdateStatus(string $id, string $newStatus, string $required, string $message): JsonResponse
@@ -130,6 +143,11 @@ class OrderController extends Controller
     {
         return [
             'id'         => $o->id,
+            'customer'   => $o->user ? [
+                'id'     => $o->user->id,
+                'nama'   => $o->user->nama,
+                'telepon'=> $o->user->telepon,
+            ] : null,
             'worker'     => $o->worker ? [
                 'id'        => $o->worker->id,
                 'nama'      => $o->worker->user?->nama,

@@ -236,6 +236,7 @@ class WorkerController extends Controller
         ];
 
         if ($full) {
+            $data['user_id']    = $w->user_id;
             $data['bio']        = $w->bio;
             $data['categories'] = $w->categories->map(fn($c) => ['id' => $c->id, 'title' => $c->title]);
             $data['tags']       = $w->tags->pluck('tag');
