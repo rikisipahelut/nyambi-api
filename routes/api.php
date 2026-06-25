@@ -53,6 +53,7 @@ Route::middleware('auth:api')->group(function () {
     Route::put('orders/{id}/cancel',   [OrderController::class, 'cancel']);
     Route::put('orders/{id}/confirm',  [OrderController::class, 'confirm']);
     Route::put('orders/{id}/complete', [OrderController::class, 'complete']);
+    Route::get('orders/{id}/logs',     [OrderController::class, 'logs']);
 
     Route::post('reviews',   [ReviewController::class, 'store']);
     Route::get('reviews/me', [ReviewController::class, 'me']);

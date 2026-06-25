@@ -12,7 +12,7 @@ class Order extends Model
 
     protected $fillable = [
         'user_id', 'worker_id', 'tanggal', 'waktu',
-        'deskripsi', 'alamat', 'telepon', 'status',
+        'deskripsi', 'alamat', 'telepon', 'status', 'cancellation_reason',
     ];
 
     public function user()

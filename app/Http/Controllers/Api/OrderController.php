@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\OrderStatusLog;
 use App\Models\WorkerProfile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,7 +15,7 @@ class OrderController extends Controller
     {
         $validated = $request->validate([
             'worker_id'  => 'required|string|exists:worker_profiles,id',
-            'tanggal'    => 'required|date|after_or_equal:today',
+            'tanggal'    => 'required|date|after:today',
             'waktu'      => 'required|date_format:H:i',
             'deskripsi'  => 'nullable|string',
             'alamat'     => 'required|string',
@@ -31,6 +32,7 @@ class OrderController extends Controller
         }
 
         $order = Order::create([...$validated, 'user_id' => $user->id]);
+        $this->logStatusChange($order, null, 'menunggu');
 
         return response()->json([
             'data'    => $this->formatOrder($order->load('worker.user')),
@@ -52,6 +54,11 @@ class OrderController extends Controller
         if ($status = $request->status) {
             $query->where('status', $status);
         }
+
+        // Auto-expire pesanan menunggu yang sudah lewat jadwal
+        Order::where('status', 'menunggu')
+            ->whereRaw("CONCAT(tanggal, ' ', waktu) < NOW()")
+            ->update(['status' => 'kadaluarsa']);
 
         $orders = $query->latest()->paginate(10);
 
@@ -81,8 +88,12 @@ class OrderController extends Controller
         return response()->json(['data' => $this->formatOrder($order)]);
     }
 
-    public function cancel(string $id): JsonResponse
+    public function cancel(Request $request, string $id): JsonResponse
     {
+        $validated = $request->validate([
+            'reason' => 'required|string|max:255',
+        ]);
+
         $order = Order::where('user_id', auth('api')->id())->findOrFail($id);
 
         if ($order->status !== 'menunggu') {
@@ -91,14 +102,47 @@ class OrderController extends Controller
             ], 422);
         }
 
-        $order->update(['status' => 'dibatalkan']);
+        $order->update([
+            'status'               => 'dibatalkan',
+            'cancellation_reason'  => $validated['reason'],
+        ]);
+        $this->logStatusChange($order, 'menunggu', 'dibatalkan', $validated['reason']);
 
         return response()->json(['data' => $this->formatOrder($order), 'message' => 'Pesanan dibatalkan']);
     }
 
     public function confirm(string $id): JsonResponse
     {
-        return $this->workerUpdateStatus($id, 'dikonfirmasi', 'menunggu', 'Pesanan dikonfirmasi');
+        $user   = auth('api')->user();
+        $worker = $user->workerProfile;
+
+        if (!$worker) {
+            return response()->json(['error' => ['code' => 'NOT_WORKER', 'message' => 'Hanya pekerja yang dapat mengkonfirmasi pesanan']], 403);
+        }
+
+        $order = Order::where('worker_id', $worker->id)->findOrFail($id);
+
+        if ($order->status === 'menunggu' && $this->isExpired($order)) {
+            $order->update(['status' => 'kadaluarsa']);
+            $this->logStatusChange($order, 'menunggu', 'kadaluarsa', 'Otomatis kadaluarsa karena melewati jadwal.');
+            return response()->json([
+                'error' => ['code' => 'EXPIRED', 'message' => 'Pesanan ini sudah kadaluarsa karena melewati jadwal yang ditentukan.'],
+            ], 422);
+        }
+
+        if ($order->status !== 'menunggu') {
+            $msg = match($order->status) {
+                'dibatalkan' => 'Pesanan ini sudah dibatalkan oleh pelanggan.',
+                'kadaluarsa' => 'Pesanan ini sudah kadaluarsa.',
+                default      => 'Status pesanan tidak valid untuk operasi ini.',
+            };
+            return response()->json(['error' => ['code' => 'INVALID_STATUS', 'message' => $msg]], 422);
+        }
+
+        $order->update(['status' => 'dikonfirmasi']);
+        $this->logStatusChange($order, 'menunggu', 'dikonfirmasi');
+
+        return response()->json(['data' => $this->formatOrder($order->load('worker.user', 'user')), 'message' => 'Pesanan dikonfirmasi']);
     }
 
     public function complete(string $id): JsonResponse
@@ -113,8 +157,54 @@ class OrderController extends Controller
 
         $order->update(['status' => 'selesai']);
         $order->worker?->increment('completed_jobs');
+        $this->logStatusChange($order, 'dikonfirmasi', 'selesai');
 
         return response()->json(['data' => $this->formatOrder($order), 'message' => 'Pesanan selesai']);
+    }
+
+    public function logs(string $id): JsonResponse
+    {
+        $user  = auth('api')->user();
+        $order = Order::findOrFail($id);
+
+        $isOwner  = $order->user_id === $user->id;
+        $isWorker = $user->workerProfile && $order->worker_id === $user->workerProfile->id;
+
+        if (!$isOwner && !$isWorker) {
+            return response()->json(['error' => ['code' => 'FORBIDDEN', 'message' => 'Akses ditolak']], 403);
+        }
+
+        $logs = OrderStatusLog::with('actor')
+            ->where('order_id', $id)
+            ->oldest()
+            ->get()
+            ->map(fn($l) => [
+                'from_status' => $l->from_status,
+                'to_status'   => $l->to_status,
+                'note'        => $l->note,
+                'actor'       => $l->actor?->nama ?? 'Sistem',
+                'created_at'  => $l->created_at,
+            ]);
+
+        return response()->json(['data' => $logs]);
+    }
+
+    private function logStatusChange(Order $order, ?string $from, string $to, ?string $note = null): void
+    {
+        OrderStatusLog::create([
+            'order_id'    => $order->id,
+            'changed_by'  => auth('api')->id(),
+            'from_status' => $from,
+            'to_status'   => $to,
+            'note'        => $note,
+        ]);
+    }
+
+    private function isExpired(Order $order): bool
+    {
+        return \Carbon\Carbon::now()->gt(
+            \Carbon\Carbon::parse("{$order->tanggal} {$order->waktu}")
+        );
     }
 
     private function workerUpdateStatus(string $id, string $newStatus, string $required, string $message): JsonResponse
@@ -129,8 +219,12 @@ class OrderController extends Controller
         $order = Order::where('worker_id', $worker->id)->findOrFail($id);
 
         if ($order->status !== $required) {
+            $message = $order->status === 'dibatalkan'
+                ? "Pesanan ini sudah dibatalkan oleh pelanggan."
+                : "Status pesanan tidak valid untuk operasi ini.";
+
             return response()->json([
-                'error' => ['code' => 'INVALID_STATUS', 'message' => "Status pesanan harus {$required}"],
+                'error' => ['code' => 'INVALID_STATUS', 'message' => $message],
             ], 422);
         }
 
@@ -159,8 +253,9 @@ class OrderController extends Controller
             'deskripsi'  => $o->deskripsi,
             'alamat'     => $o->alamat,
             'telepon'    => $o->telepon,
-            'status'     => $o->status,
-            'created_at' => $o->created_at,
+            'status'               => $o->status,
+            'cancellation_reason'  => $o->cancellation_reason,
+            'created_at'           => $o->created_at,
         ];
     }
 }

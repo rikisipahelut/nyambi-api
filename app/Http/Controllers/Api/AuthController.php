@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\SecurityLog;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -39,21 +40,29 @@ class AuthController extends Controller
         $token = auth('api')->attempt(['email' => $request->email, 'password' => $request->password]);
 
         if (!$token) {
+            $this->securityLog(null, 'login_failed', $request->email, $request);
             return response()->json([
                 'error' => ['code' => 'INVALID_CREDENTIALS', 'message' => 'Email atau password salah'],
             ], 401);
         }
 
+        $user = auth('api')->user();
+        $this->securityLog($user->id, 'login_success', $user->email, $request);
+
         return response()->json([
             'access_token' => $token,
             'expires_in'   => config('jwt.ttl') * 60,
-            'user'         => $this->userPayload(auth('api')->user()),
+            'user'         => $this->userPayload($user),
         ]);
     }
 
-    public function logout(): JsonResponse
+    public function logout(Request $request): JsonResponse
     {
+        $user = auth('api')->user();
         auth('api')->logout();
+        if ($user) {
+            $this->securityLog($user->id, 'logout', $user->email, $request);
+        }
         return response()->json(['message' => 'Berhasil logout']);
     }
 
@@ -70,6 +79,17 @@ class AuthController extends Controller
                 'error' => ['code' => 'TOKEN_INVALID', 'message' => 'Tidak dapat memperbarui token'],
             ], 401);
         }
+    }
+
+    private function securityLog(?string $userId, string $event, ?string $email, Request $request): void
+    {
+        SecurityLog::create([
+            'user_id'    => $userId,
+            'event'      => $event,
+            'email'      => $email,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
     }
 
     private function userPayload(User $user): array

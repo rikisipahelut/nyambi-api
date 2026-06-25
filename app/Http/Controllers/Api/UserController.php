@@ -7,6 +7,7 @@ use App\Models\Favorite;
 use App\Models\Notification;
 use App\Models\Order;
 use App\Models\Review;
+use App\Models\SecurityLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -107,6 +108,14 @@ class UserController extends Controller
         }
 
         $user->update(['password' => $request->new_password]);
+
+        SecurityLog::create([
+            'user_id'    => $user->id,
+            'event'      => 'password_changed',
+            'email'      => $user->email,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
 
         return response()->json(['message' => 'Password berhasil diubah']);
     }
