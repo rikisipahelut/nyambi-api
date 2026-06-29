@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\ComplaintController;
 use App\Http\Controllers\Api\FavoriteController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OrderController;
@@ -53,7 +54,17 @@ Route::middleware('auth:api')->group(function () {
     Route::put('orders/{id}/cancel',   [OrderController::class, 'cancel']);
     Route::put('orders/{id}/confirm',  [OrderController::class, 'confirm']);
     Route::put('orders/{id}/complete', [OrderController::class, 'complete']);
-    Route::get('orders/{id}/logs',     [OrderController::class, 'logs']);
+    Route::get('orders/{id}/logs',          [OrderController::class, 'logs']);
+    Route::post('orders/{id}/proof',        [OrderController::class, 'uploadProof']);
+    Route::delete('orders/{id}/proof/{photoId}', [OrderController::class, 'deleteProof']);
+
+    Route::prefix('orders/{orderId}/complaint')->group(function () {
+        Route::get('/',           [ComplaintController::class, 'show']);
+        Route::post('/',          [ComplaintController::class, 'store']);
+        Route::post('/responses', [ComplaintController::class, 'addResponse']);
+        Route::put('/resolve',    [ComplaintController::class, 'resolve']);
+        Route::put('/close',      [ComplaintController::class, 'close']);
+    });
 
     Route::post('reviews',   [ReviewController::class, 'store']);
     Route::get('reviews/me', [ReviewController::class, 'me']);

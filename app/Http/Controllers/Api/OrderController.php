@@ -4,10 +4,14 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\OrderProofPhoto;
 use App\Models\OrderStatusLog;
 use App\Models\WorkerProfile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class OrderController extends Controller
 {
@@ -46,9 +50,9 @@ class OrderController extends Controller
         $query = Order::with('worker.user', 'user');
 
         if ($user->is_worker && $user->workerProfile && $request->as !== 'customer') {
-            $query->where('worker_id', $user->workerProfile->id);
+            $query->where('worker_id', $user->workerProfile->id)->with('complaint', 'proofPhotos');
         } else {
-            $query->where('user_id', $user->id);
+            $query->where('user_id', $user->id)->with('complaint', 'proofPhotos');
         }
 
         if ($status = $request->status) {
@@ -76,7 +80,7 @@ class OrderController extends Controller
     public function show(string $id): JsonResponse
     {
         $user  = auth('api')->user();
-        $order = Order::with('worker.user')->findOrFail($id);
+        $order = Order::with('worker.user', 'user', 'complaint', 'proofPhotos')->findOrFail($id);
 
         $isOwner  = $order->user_id === $user->id;
         $isWorker = $user->workerProfile && $order->worker_id === $user->workerProfile->id;
@@ -233,8 +237,111 @@ class OrderController extends Controller
         return response()->json(['data' => $this->formatOrder($order->load('worker.user')), 'message' => $message]);
     }
 
+    public function uploadProof(Request $request, string $id): JsonResponse
+    {
+        $user   = auth('api')->user();
+        $worker = $user->workerProfile;
+
+        if (!$worker) {
+            return response()->json(['error' => ['code' => 'FORBIDDEN', 'message' => 'Hanya pekerja yang dapat upload foto bukti']], 403);
+        }
+
+        $order = Order::where('worker_id', $worker->id)->findOrFail($id);
+
+        if (!in_array($order->status, ['dikonfirmasi', 'selesai'])) {
+            return response()->json(['error' => ['code' => 'INVALID_STATUS', 'message' => 'Foto bukti hanya bisa diupload pada pesanan dikonfirmasi atau selesai']], 422);
+        }
+
+        $request->validate([
+            'photos'   => 'required|array|min:1|max:5',
+            'photos.*' => 'required|image|mimes:jpeg,jpg,png,webp|max:10240',
+        ]);
+
+        $existing = OrderProofPhoto::where('order_id', $id)->count();
+        $incoming = count($request->file('photos'));
+
+        if ($existing + $incoming > 5) {
+            return response()->json(['error' => ['code' => 'TOO_MANY_PHOTOS', 'message' => "Maksimal 5 foto. Sudah ada {$existing} foto, tidak bisa menambah {$incoming} lagi."]], 422);
+        }
+
+        $photos = [];
+        foreach ($request->file('photos') as $file) {
+            $path   = $this->compressAndStore($file, $id);
+            $photo  = OrderProofPhoto::create(['order_id' => $id, 'path' => $path]);
+            $photos[] = ['id' => $photo->id, 'url' => Storage::disk('public')->url($path)];
+        }
+
+        return response()->json(['data' => $photos, 'message' => count($photos).' foto berhasil diupload'], 201);
+    }
+
+    public function deleteProof(string $id, string $photoId): JsonResponse
+    {
+        $user   = auth('api')->user();
+        $worker = $user->workerProfile;
+
+        if (!$worker) {
+            return response()->json(['error' => ['code' => 'FORBIDDEN', 'message' => 'Akses ditolak']], 403);
+        }
+
+        Order::where('worker_id', $worker->id)->findOrFail($id);
+
+        $photo = OrderProofPhoto::where('order_id', $id)->findOrFail($photoId);
+        Storage::disk('public')->delete($photo->path);
+        $photo->delete();
+
+        return response()->json(['message' => 'Foto dihapus']);
+    }
+
+    private function compressAndStore(UploadedFile $file, string $orderId): string
+    {
+        $mime = $file->getMimeType();
+
+        $src = match ($mime) {
+            'image/png'  => imagecreatefrompng($file->getRealPath()),
+            'image/webp' => imagecreatefromwebp($file->getRealPath()),
+            default      => imagecreatefromjpeg($file->getRealPath()),
+        };
+
+        if (!$src) {
+            throw new \RuntimeException('Gagal membaca gambar.');
+        }
+
+        $origW = imagesx($src);
+        $origH = imagesy($src);
+        $maxDim = 1920;
+
+        if ($origW > $maxDim || $origH > $maxDim) {
+            if ($origW >= $origH) {
+                $newW = $maxDim;
+                $newH = (int) round($origH * $maxDim / $origW);
+            } else {
+                $newH = $maxDim;
+                $newW = (int) round($origW * $maxDim / $origH);
+            }
+            $dst = imagecreatetruecolor($newW, $newH);
+            imagecopyresampled($dst, $src, 0, 0, 0, 0, $newW, $newH, $origW, $origH);
+            imagedestroy($src);
+            $src = $dst;
+        }
+
+        $dir      = "proof/{$orderId}";
+        $filename = Str::uuid()->toString() . '.jpg';
+
+        Storage::disk('public')->makeDirectory($dir);
+        $fullPath = storage_path("app/public/{$dir}/{$filename}");
+
+        imagejpeg($src, $fullPath, 82);
+        imagedestroy($src);
+
+        return "{$dir}/{$filename}";
+    }
+
     private function formatOrder(Order $o): array
     {
+        $proofPhotos = $o->relationLoaded('proofPhotos')
+            ? $o->proofPhotos->map(fn($p) => ['id' => $p->id, 'url' => Storage::disk('public')->url($p->path)])->values()->all()
+            : [];
+
         return [
             'id'         => $o->id,
             'customer'   => $o->user ? [
@@ -244,6 +351,7 @@ class OrderController extends Controller
             ] : null,
             'worker'     => $o->worker ? [
                 'id'        => $o->worker->id,
+                'user_id'   => $o->worker->user_id,
                 'nama'      => $o->worker->user?->nama,
                 'specialty' => $o->worker->specialty,
                 'image_url' => $o->worker->image_url,
@@ -255,6 +363,8 @@ class OrderController extends Controller
             'telepon'    => $o->telepon,
             'status'               => $o->status,
             'cancellation_reason'  => $o->cancellation_reason,
+            'has_complaint'        => $o->relationLoaded('complaint') ? $o->complaint?->status === 'terbuka' : false,
+            'proof_photos'         => $proofPhotos,
             'created_at'           => $o->created_at,
         ];
     }

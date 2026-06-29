@@ -29,4 +29,14 @@ class Order extends Model
     {
         return $this->hasOne(Review::class);
     }
+
+    public function complaint()
+    {
+        return $this->hasOne(Complaint::class)->latestOfMany();
+    }
+
+    public function proofPhotos()
+    {
+        return $this->hasMany(OrderProofPhoto::class)->oldest();
+    }
 }

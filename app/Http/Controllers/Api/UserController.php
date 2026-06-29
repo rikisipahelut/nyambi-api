@@ -45,6 +45,14 @@ class UserController extends Controller
                 ->count();
         }
 
+        $activeComplaintsCustomer = \App\Models\Complaint::whereHas('order', fn($q) => $q->where('user_id', $user->id))
+            ->where('status', 'terbuka')->count();
+        $activeComplaintsWorker = 0;
+        if ($user->is_worker && $user->workerProfile) {
+            $activeComplaintsWorker = \App\Models\Complaint::whereHas('order', fn($q) => $q->where('worker_id', $user->workerProfile->id))
+                ->where('status', 'terbuka')->count();
+        }
+
         return response()->json([
             'data' => [
                 'orders'               => Order::where('user_id', $user->id)->count(),
@@ -52,6 +60,7 @@ class UserController extends Controller
                 'reviews'              => Review::where('user_id', $user->id)->count(),
                 'unread_notifications' => Notification::where('user_id', $user->id)->where('is_read', false)->count(),
                 'incoming_orders'      => $incomingOrders,
+                'active_complaints'    => $activeComplaintsCustomer + $activeComplaintsWorker,
             ],
         ]);
     }
