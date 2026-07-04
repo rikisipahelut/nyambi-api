@@ -4,7 +4,8 @@
 # JetBrains: built-in HTTP Client support
 # ============================================================
 
-@baseUrl = http://127.0.0.1:8000/api
+# @baseUrl = http://127.0.0.1:8000/api
+@baseUrl = https://nyambi-api.balijingga.com/api
 @contentType = application/json
 
 # Setelah login, copy access_token ke sini:
